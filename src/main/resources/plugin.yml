@@ -1,0 +1,21 @@
+name: CooldownHUDGuard
+version: '${project.version}'
+main: dev.tukisg.anticooldownhud.AntiCooldownHudPlugin
+api-version: '1.21.11'
+author: TukisgDEV
+website: https://github.com/TukisgDEV/AntiCooldownHUD.jar
+description: Detects CooldownHUD client signatures on Paper hubs.
+depend: [packetevents]
+
+commands:
+  cooldownguard:
+    description: Проверка CooldownHUD и управление плагином
+    usage: /cooldownguard <check player|status player|reload>
+    permission: cooldownguard.admin
+
+permissions:
+  cooldownguard.admin:
+    default: op
+  cooldownguard.bypass:
+    description: Исключает игрока из проверок
+    default: false

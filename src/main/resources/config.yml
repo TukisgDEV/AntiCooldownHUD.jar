@@ -1,0 +1,6 @@
+kick-message: 'У вас был найден запрещенный мод!'
+action: KICK
+check-on-join: true
+join-delay-ticks: 40
+response-timeout-ticks: 80
+log-inconclusive: true
