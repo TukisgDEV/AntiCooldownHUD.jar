@@ -1,6 +1,8 @@
-kick-message: 'У вас был найден запрещенный мод!'
-action: KICK
+action: BAN
 check-on-join: true
 join-delay-ticks: 40
 response-timeout-ticks: 80
+retry-delay-ticks: 20
+max-timeout-retries: 1
+max-concurrent-checks: 16
 log-inconclusive: true

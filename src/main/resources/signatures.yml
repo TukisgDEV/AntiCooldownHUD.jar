@@ -1,0 +1,50 @@
+signatures:
+  cooldownhud-combat:
+    keybind: key.cooldown_hud.open
+    first:
+      key: activity.module.auto_mace.name
+      values: ['AutoMace', 'Авто-булава (AutoMace)']
+    second:
+      key: activity.module.auto_totem.name
+      values: ['AutoTotem', 'Авто-тотем (AutoTotem)']
+  cooldownhud-keybind:
+    keybind: key.cooldown_hud.open
+    require-translations: false
+    first:
+      key: activity.module.auto_mace.name
+      values: ['AutoMace', 'Авто-булава (AutoMace)']
+    second:
+      key: activity.module.auto_totem.name
+      values: ['AutoTotem', 'Авто-тотем (AutoTotem)']
+  cooldownhud-legacy:
+    keybind: key.cooldown_hud.open
+    first:
+      key: key.activity.open_gui
+      values: ['Open CooldownHUD Menu', 'Открыть меню CooldownHUD']
+    second:
+      key: activity.setting.general.enable_hud
+      values: ['Enable CooldownHUD HUD', 'Включить HUD CooldownHUD']
+  cooldownhud-anchor-cart:
+    keybind: key.cooldown_hud.open
+    first:
+      key: activity.module.auto_anchor.name
+      values: ['AutoAnchor', 'Авто-якорь (AutoAnchor)']
+    second:
+      key: activity.module.auto_cart.name
+      values: ['AutoCart', 'Авто-вагонетки (AutoCart)']
+  cooldownhud-stun-pearl:
+    keybind: key.cooldown_hud.open
+    first:
+      key: activity.module.auto_stun_slam.name
+      values: ['AutoStunSlam', 'Авто Стан Слэм']
+    second:
+      key: activity.module.auto_pearl_catch.name
+      values: ['AutoPearlCatch', 'Пёрл Кэтч (AutoPearlCatch)']
+  cooldownhud-refill:
+    keybind: key.cooldown_hud.open
+    first:
+      key: activity.module.hp_reaper.name
+      values: ['HPReaper']
+    second:
+      key: activity.module.cart_refill.name
+      values: ['CartRefill', 'Пополнение (CartRefill)']

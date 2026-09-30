@@ -4,13 +4,13 @@ main: dev.tukisg.anticooldownhud.AntiCooldownHudPlugin
 api-version: '1.21.11'
 author: TukisgDEV
 website: https://github.com/TukisgDEV/AntiCooldownHUD.jar
-description: Detects CooldownHUD client signatures on Paper hubs.
-depend: [packetevents]
+description: Detects CooldownHUD signatures and issues 14-day LibertyBans account bans.
+depend: [packetevents, LibertyBans]
 
 commands:
   cooldownguard:
     description: Проверка CooldownHUD и управление плагином
-    usage: /cooldownguard <check player|status player|reload>
+    usage: /cooldownguard <check player|status player|bans [page]|history player [page]|signatures|reload>
     permission: cooldownguard.admin
 
 permissions:

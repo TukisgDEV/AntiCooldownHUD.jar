@@ -6,7 +6,7 @@
 
     <groupId>dev.tukisg</groupId>
     <artifactId>AntiCooldownHUD</artifactId>
-    <version>1.0.1</version>
+    <version>1.1.0</version>
 
     <name>AntiCooldownHUD</name>
     <description>CooldownHUD client signature checks for Paper hubs.</description>
@@ -25,9 +25,18 @@
         <paper.version>1.21.11-R0.1-SNAPSHOT</paper.version>
         <packetevents.version>2.14.0</packetevents.version>
         <junit.version>5.11.4</junit.version>
+        <libertybans.version>1.1.4</libertybans.version>
     </properties>
 
     <repositories>
+        <repository>
+            <id>arim-agpl3</id>
+            <url>https://mvn-repo.arim.space/affero-gpl3/</url>
+        </repository>
+        <repository>
+            <id>arim-lgpl3</id>
+            <url>https://mvn-repo.arim.space/lesser-gpl3/</url>
+        </repository>
         <repository>
             <id>papermc</id>
             <url>https://repo.papermc.io/repository/maven-public/</url>
@@ -39,6 +48,12 @@
     </repositories>
 
     <dependencies>
+        <dependency>
+            <groupId>space.arim.libertybans</groupId>
+            <artifactId>bans-api</artifactId>
+            <version>${libertybans.version}</version>
+            <scope>provided</scope>
+        </dependency>
         <dependency>
             <groupId>io.papermc.paper</groupId>
             <artifactId>paper-api</artifactId>
