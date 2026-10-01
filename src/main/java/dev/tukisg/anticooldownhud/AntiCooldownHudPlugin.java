@@ -205,12 +205,9 @@ public final class AntiCooldownHudPlugin extends JavaPlugin {
                                     profiles.stream().map(SignatureCheck.Profile::id).toList()));
             return true;
         }
-        if (subcommand.equals("bans") && args.length <= 2) {
-            showHistory(sender, args.length == 2 ? args[1] : "1", null);
-            return true;
-        }
-        if (subcommand.equals("history") && args.length >= 2 && args.length <= 3) {
-            showHistory(sender, args.length == 3 ? args[2] : "1", args[1]);
+        HistoryQuery history = HistoryQuery.parse(args);
+        if (history != null) {
+            showHistory(sender, history.page(), history.player());
             return true;
         }
         if ((subcommand.equals("check") || subcommand.equals("status")) && args.length == 2) {

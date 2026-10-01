@@ -10,7 +10,7 @@ depend: [packetevents, LibertyBans]
 commands:
   cooldownguard:
     description: Проверка CooldownHUD и управление плагином
-    usage: /cooldownguard <check player|status player|bans [page]|history player [page]|signatures|reload>
+    usage: /cooldownguard <check player|status player|bans [page]|history [page]|history player [page]|signatures|reload>
     permission: cooldownguard.admin
 
 permissions:
