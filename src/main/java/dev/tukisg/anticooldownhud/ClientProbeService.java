@@ -76,7 +76,7 @@ final class ClientProbeService implements Listener, AutoCloseable {
     private final JavaPlugin plugin;
     private final Settings settings;
     private final List<SignatureCheck.Profile> profiles;
-    private final BiConsumer<Player, String> detected;
+    private final BiConsumer<Player, SignatureCheck.Profile> detected;
     private final Predicate<UUID> pendingBan;
     private final Map<UUID, Probe> probes = new ConcurrentHashMap<>();
     private final Map<UUID, BukkitTask> queued = new HashMap<>();
@@ -89,7 +89,7 @@ final class ClientProbeService implements Listener, AutoCloseable {
             Settings settings,
             List<SignatureCheck.Profile> profiles,
             Predicate<UUID> pendingBan,
-            BiConsumer<Player, String> detected) {
+            BiConsumer<Player, SignatureCheck.Profile> detected) {
         this.plugin = plugin;
         this.settings = settings;
         this.profiles = List.copyOf(profiles);
@@ -272,7 +272,7 @@ final class ClientProbeService implements Listener, AutoCloseable {
             }
             case DETECTED -> {
                 status(player, "DETECTED: " + detail);
-                detected.accept(player, session.profile().id());
+                detected.accept(player, session.profile());
             }
             case NO_MATCH -> status(player, "NO_MATCH: " + detail);
             case INCONCLUSIVE -> status(player, "INCONCLUSIVE: " + detail);

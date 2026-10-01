@@ -1,5 +1,7 @@
 package dev.tukisg.anticooldownhud;
 
+import net.kyori.adventure.text.Component;
+
 import org.bukkit.Bukkit;
 import org.bukkit.command.Command;
 import org.bukkit.command.CommandSender;
@@ -11,6 +13,8 @@ import space.arim.libertybans.api.LibertyBans;
 import space.arim.omnibus.OmnibusProvider;
 
 import java.io.File;
+import java.io.InputStreamReader;
+import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -34,6 +38,7 @@ public final class AntiCooldownHudPlugin extends JavaPlugin {
     private final Set<CommandSender> listing = new HashSet<>();
     private LibertyBanGateway gateway;
     private BanService bans;
+    private ModPunishments punishments;
     private ClientProbeService probes;
     private List<SignatureCheck.Profile> profiles = List.of();
     private boolean enforce;
@@ -60,6 +65,7 @@ public final class AntiCooldownHudPlugin extends JavaPlugin {
                             getLogger(),
                             BAN_DURATION,
                             BAN_REASON);
+            punishments = new ModPunishments(bans);
             loadSettings();
         } catch (Exception | LinkageError exception) {
             getLogger()
@@ -73,8 +79,11 @@ public final class AntiCooldownHudPlugin extends JavaPlugin {
     }
 
     private void loadSettings() throws Exception {
-        List<SignatureCheck.Profile> updated =
-                SignatureCatalog.load(new File(getDataFolder(), "signatures.yml"));
+        List<SignatureCheck.Profile> updated;
+        try (var bundled =
+                new InputStreamReader(getResource("signatures.yml"), StandardCharsets.UTF_8)) {
+            updated = SignatureCatalog.load(new File(getDataFolder(), "signatures.yml"), bundled);
+        }
         FileConfiguration config = getConfig();
         String action = config.getString("action", "BAN").toUpperCase(Locale.ROOT);
         boolean migrate = action.equals("KICK");
@@ -117,18 +126,49 @@ public final class AntiCooldownHudPlugin extends JavaPlugin {
         return value;
     }
 
-    private void detected(Player player, String signature) {
+    private void detected(Player player, SignatureCheck.Profile profile) {
+        String signature = profile.id();
         if (!enforce || player.hasPermission("cooldownguard.bypass")) {
-            getLogger().info(player.getName() + ": DETECTED " + signature + "; action=LOG/BYPASS");
+            getLogger()
+                    .info(
+                            player.getName()
+                                    + ": DETECTED "
+                                    + signature
+                                    + "; mod="
+                                    + profile.modName()
+                                    + "; action=LOG/BYPASS");
             return;
         }
         UUID playerId = player.getUniqueId();
         String name = player.getName();
         ClientProbeService source = probes;
-        source.status(player, "BAN_PENDING: " + signature);
-        bans.ban(playerId, name, signature)
+        source.status(player, profile.action() + "_PENDING: " + signature);
+        punishments
+                .apply(
+                        playerId,
+                        name,
+                        profile,
+                        reason -> {
+                            source.status(player, "KICKED: " + profile.modName());
+                            getLogger()
+                                    .info(
+                                            "Kicked "
+                                                    + name
+                                                    + " ("
+                                                    + playerId
+                                                    + "), mod="
+                                                    + profile.modName()
+                                                    + ", signature="
+                                                    + signature
+                                                    + ", reason="
+                                                    + reason);
+                            player.kick(Component.text(reason));
+                        })
                 .whenComplete(
-                        (outcome, error) -> {
+                        (result, error) -> {
+                            if (error == null && result.action() == SignatureCheck.Action.KICK)
+                                return;
+                            BanService.Outcome outcome = result == null ? null : result.ban();
                             if (error != null)
                                 getLogger()
                                         .log(
@@ -202,7 +242,16 @@ public final class AntiCooldownHudPlugin extends JavaPlugin {
                             + "): "
                             + String.join(
                                     ", ",
-                                    profiles.stream().map(SignatureCheck.Profile::id).toList()));
+                                    profiles.stream()
+                                            .map(
+                                                    profile ->
+                                                            profile.modName()
+                                                                    + " ["
+                                                                    + profile.id()
+                                                                    + ": "
+                                                                    + profile.action()
+                                                                    + "]")
+                                            .toList()));
             return true;
         }
         HistoryQuery history = HistoryQuery.parse(args);

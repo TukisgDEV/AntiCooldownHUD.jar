@@ -4,14 +4,44 @@ import org.bukkit.configuration.ConfigurationSection;
 import org.bukkit.configuration.file.YamlConfiguration;
 
 import java.io.File;
+import java.io.Reader;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Locale;
 
 final class SignatureCatalog {
     static List<SignatureCheck.Profile> load(File file) throws Exception {
         YamlConfiguration config = new YamlConfiguration();
         config.load(file);
+        return parse(config);
+    }
+
+    static List<SignatureCheck.Profile> load(File file, Reader bundled) throws Exception {
+        YamlConfiguration config = new YamlConfiguration();
+        config.load(file);
+        YamlConfiguration defaults = new YamlConfiguration();
+        defaults.load(bundled);
+        ConfigurationSection additions = defaults.getConfigurationSection("signatures");
+        if (additions == null || config.getConfigurationSection("signatures") == null)
+            throw new IllegalArgumentException("Missing signatures section");
+        boolean changed = false;
+        for (String id : additions.getKeys(false)) {
+            String base = "signatures." + id;
+            if (config.contains(base)) continue;
+            ConfigurationSection entry = additions.getConfigurationSection(id);
+            for (String key : entry.getKeys(true)) {
+                if (!entry.isConfigurationSection(key))
+                    config.set(base + "." + key, entry.get(key));
+            }
+            changed = true;
+        }
+        List<SignatureCheck.Profile> result = parse(config);
+        if (changed) config.save(file);
+        return result;
+    }
+
+    private static List<SignatureCheck.Profile> parse(YamlConfiguration config) {
         ConfigurationSection entries = config.getConfigurationSection("signatures");
         if (entries == null) throw new IllegalArgumentException("Missing signatures section");
         List<SignatureCheck.Profile> profiles = new ArrayList<>();
@@ -25,7 +55,17 @@ final class SignatureCatalog {
                             translation(entry, "first"),
                             translation(entry, "second"),
                             entry.getString("keybind"),
-                            entry.getBoolean("require-translations", true)));
+                            entry.getBoolean("require-translations", true),
+                            entry.getString(
+                                    "mod-name",
+                                    id.startsWith("cooldownhud-")
+                                            ? "CooldownHUD"
+                                            : id.startsWith("freecam-") ? "Freecam" : id),
+                            SignatureCheck.Action.valueOf(
+                                    entry.getString(
+                                                    "action",
+                                                    id.startsWith("freecam-") ? "KICK" : "BAN")
+                                            .toUpperCase(Locale.ROOT))));
         }
         if (profiles.isEmpty() || profiles.size() > 64)
             throw new IllegalArgumentException("Enable between 1 and 64 signatures");

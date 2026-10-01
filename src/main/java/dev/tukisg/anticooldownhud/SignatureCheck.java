@@ -3,6 +3,11 @@ package dev.tukisg.anticooldownhud;
 import java.util.Set;
 
 public final class SignatureCheck {
+    public enum Action {
+        BAN,
+        KICK
+    }
+
     public record Translation(String key, Set<String> values) {
         public Translation {
             if (key == null || !key.matches("[a-zA-Z0-9_.-]{1,160}")) {
@@ -22,9 +27,20 @@ public final class SignatureCheck {
             Translation first,
             Translation second,
             String keybind,
-            boolean requireTranslations) {
+            boolean requireTranslations,
+            String modName,
+            Action action) {
         public Profile(String id, Translation first, Translation second, String keybind) {
             this(id, first, second, keybind, true);
+        }
+
+        public Profile(
+                String id,
+                Translation first,
+                Translation second,
+                String keybind,
+                boolean requireTranslations) {
+            this(id, first, second, keybind, requireTranslations, "CooldownHUD", Action.BAN);
         }
 
         public Profile {
@@ -35,6 +51,16 @@ public final class SignatureCheck {
             }
             if (keybind == null || !keybind.matches("[a-zA-Z0-9_.-]{1,160}"))
                 throw new IllegalArgumentException("Invalid keybind");
+            if (modName == null
+                    || modName.isBlank()
+                    || modName.length() > 64
+                    || modName.chars().anyMatch(Character::isISOControl)
+                    || action == null)
+                throw new IllegalArgumentException("Invalid mod name or action");
+        }
+
+        public String reason() {
+            return "У вас был найден запрещенный мод: " + modName + "!";
         }
     }
 

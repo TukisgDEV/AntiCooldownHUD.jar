@@ -52,7 +52,10 @@ class DetectionSessionTest {
         var profiles = catalog();
         var session = new DetectionSession(profiles, 1);
         var challenge = new SignatureCheck.Challenge(profiles.getFirst(), "vanilla123");
-        assertEquals(NO_MATCH, session.reply(challenge, vanilla(challenge)));
+        assertEquals(NEXT, session.reply(challenge, vanilla(challenge)));
+        assertEquals("freecam-legacy", session.profile().id());
+        var freecam = new SignatureCheck.Challenge(session.profile(), "vanillaFreecam123");
+        assertEquals(NO_MATCH, session.reply(freecam, vanilla(freecam)));
     }
 
     @Test

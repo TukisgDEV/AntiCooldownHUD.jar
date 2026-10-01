@@ -48,3 +48,23 @@ signatures:
     second:
       key: activity.module.cart_refill.name
       values: ['CartRefill', 'Пополнение (CartRefill)']
+  freecam-legacy:
+    mod-name: Freecam
+    action: KICK
+    keybind: key.freecam.toggle
+    first:
+      key: key.freecam.playerControl
+      values: ["Control Player", "Controle do jogador", "Controlla il giocatore", "Controlo do jogador", "Contrôler le joueur", "Kontrollera Spelare", "Kontroluj Gracza", "Oyuncuyu Kontrol Et", "Spieler Kontrollieren", "Керувати гравцем", "Управлять игроком", "هدایت بازیکن", "プレーヤーコントロール", "控制玩家"]
+    second:
+      key: key.freecam.tripodReset
+      values: ["Redefinir tripé", "Reset Tripod", "Resetowanie Statywu", "Resetta treppiedi", "Réinitialiser le tripode", "Stativ zurücksetzen", "Tripodu Sıfırla", "Сбросить штатив", "Скинути штатив", "بازگشت دوربین سه‌پایه به تنظیم اولیه", "三脚のリセット", "重置三脚架", "重設三腳架"]
+  freecam-modern:
+    mod-name: Freecam
+    action: KICK
+    keybind: key.freecam.toggle
+    first:
+      key: key.freecam.controlPlayer.toggle
+      values: ["Control Player", "Controlar Jogador", "Controlar Jugador", "Controlla il giocatore", "Contrôler le joueur", "Kontrollera Spelare", "Kontroluj Gracza", "Oyuncuyu Kontrol Et", "Spieler Kontrollieren", "Керувати гравцем", "Управлять игроком", "تحكم اللاعب", "هدایت بازیکن", "プレーヤーコントロール", "控制玩家"]
+    second:
+      key: key.freecam.tripod.reset
+      values: ["Redefinir Tripé", "Reset Tripod", "Resetowanie Statywu", "Resetta treppiedi", "Restablecer Trípode", "Réinitialiser le tripode", "Stativ zurücksetzen", "Tripodu Sıfırla", "Återställ stativet", "Сбросить штатив", "Скинути штатив", "بازگشت دوربین سه‌پایه به تنظیم اولیه", "ضبت الترايبود", "三脚のリセット", "重置视角", "重設三腳架"]

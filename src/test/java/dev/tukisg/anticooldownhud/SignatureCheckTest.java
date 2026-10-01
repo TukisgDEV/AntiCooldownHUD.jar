@@ -128,6 +128,7 @@ class SignatureCheckTest {
         }
         int detected = 0;
         for (SignatureCheck.Profile profile : catalog()) {
+            if (!profile.id().startsWith("cooldownhud-")) continue;
             var challenge = new SignatureCheck.Challenge(profile, "fixture12345");
             String[] lines = {
                 translations.getProperty(profile.first().key(), challenge.fallbackA()),

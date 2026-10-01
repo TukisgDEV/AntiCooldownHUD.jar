@@ -51,6 +51,16 @@ final class BanService implements AutoCloseable {
     }
 
     synchronized CompletionStage<Outcome> ban(UUID playerId, String name, String signature) {
+        return ban(playerId, name, signature, reason);
+    }
+
+    synchronized CompletionStage<Outcome> ban(
+            UUID playerId, String name, String signature, String punishmentReason) {
+        if (punishmentReason == null
+                || punishmentReason.isBlank()
+                || punishmentReason.length() > 1024
+                || punishmentReason.chars().anyMatch(Character::isISOControl))
+            throw new IllegalArgumentException("Invalid ban reason");
         if (closed.get())
             return CompletableFuture.failedFuture(
                     new IllegalStateException("Ban service is closed"));
@@ -58,7 +68,7 @@ final class BanService implements AutoCloseable {
         CompletableFuture<Outcome> existing = pending.putIfAbsent(playerId, result);
         if (existing != null) return existing;
         try {
-            gateway.ban(playerId, name, signature, duration, reason)
+            gateway.ban(playerId, name, signature, duration, punishmentReason)
                     .whenComplete(
                             (ban, error) -> {
                                 if (error != null) {
@@ -80,7 +90,9 @@ final class BanService implements AutoCloseable {
                                                                 + "), signature="
                                                                 + signature
                                                                 + ", expires="
-                                                                + record.expires());
+                                                                + record.expires()
+                                                                + ", reason="
+                                                                + record.reason());
                                                 try {
                                                     history.append(record);
                                                     saved = true;
