@@ -3,18 +3,23 @@ package dev.tukisg.anticooldownhud;
 final class ProbeDiagnostics {
     static String detail(SignatureCheck.Challenge challenge, String[] lines) {
         var profile = challenge.profile();
-        String key =
-                lines[2].isBlank()
-                        ? "empty"
-                        : profile.keybind().equals(lines[2]) ? "missing" : "text";
+        String thirdDetail;
+        if (profile.probeFormat() == SignatureCheck.ProbeFormat.THREE_TRANSLATIONS) {
+            thirdDetail = ", third=" + profile.third().values().contains(lines[2]);
+        } else {
+            String key =
+                    lines[2].isBlank()
+                            ? "empty"
+                            : profile.keybind().equals(lines[2]) ? "missing" : "text";
+            thirdDetail = ", key=" + key;
+        }
         String detail =
                 profile.id()
                         + ", first="
                         + profile.first().values().contains(lines[0])
                         + ", second="
                         + profile.second().values().contains(lines[1])
-                        + ", key="
-                        + key;
+                        + thirdDetail;
         if (challenge.evaluate(lines) == SignatureCheck.Result.PARTIAL) {
             if (challenge.profile().probeFormat()
                     == SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT) {
@@ -43,6 +48,7 @@ final class ProbeDiagnostics {
         value =
                 value.replace(challenge.fallbackA(), "<fallbackA>")
                         .replace(challenge.fallbackB(), "<fallbackB>")
+                        .replace(challenge.fallbackC(), "<fallbackC>")
                         .replace(challenge.wrapperFallback(), "<wrapperFallback>")
                         .replace(challenge.nonce(), "<nonce>");
         StringBuilder result = new StringBuilder("\"");

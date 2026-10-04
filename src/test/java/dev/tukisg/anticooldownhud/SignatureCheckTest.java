@@ -30,14 +30,21 @@ class SignatureCheckTest {
             new SignatureCheck.Challenge(PROFILE, "challenge123");
 
     static String[] match(SignatureCheck.Challenge challenge) {
-        return new String[] {"AutoMace", "AutoTotem", "H", challenge.nonce()};
+        return new String[] {
+            "AutoMace",
+            "AutoTotem",
+            challenge.profile().third() == null ? "H" : "AutoAnchor",
+            challenge.nonce()
+        };
     }
 
     static String[] vanilla(SignatureCheck.Challenge challenge) {
         return new String[] {
             challenge.fallbackA(),
             challenge.fallbackB(),
-            challenge.profile().keybind(),
+            challenge.profile().third() == null
+                    ? challenge.profile().keybind()
+                    : challenge.fallbackC(),
             challenge.nonce()
         };
     }
@@ -133,16 +140,18 @@ class SignatureCheckTest {
             String[] lines = {
                 translations.getProperty(profile.first().key(), challenge.fallbackA()),
                 translations.getProperty(profile.second().key(), challenge.fallbackB()),
-                profile.keybind().equals(translations.getProperty("keybind.registered"))
-                        ? "H"
-                        : profile.keybind(),
+                profile.third() != null
+                        ? translations.getProperty(profile.third().key(), challenge.fallbackC())
+                        : profile.keybind().equals(translations.getProperty("keybind.registered"))
+                                ? "H"
+                                : profile.keybind(),
                 challenge.nonce()
             };
             if (challenge.evaluate(lines) == DETECTED) detected++;
             else assertEquals("cooldownhud-legacy", profile.id());
             assertEquals(NO_MATCH, challenge.evaluate(vanilla(challenge)));
         }
-        assertEquals(fixture.startsWith("legacy") ? 7 : 6, detected);
+        assertEquals(fixture.startsWith("legacy") ? 8 : 7, detected);
     }
 
     @Test

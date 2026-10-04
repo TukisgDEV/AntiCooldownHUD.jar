@@ -127,6 +127,35 @@ class SignatureCatalogTest {
     }
 
     @Test
+    void installsThreeTranslationProfileOnceAndPreservesExistingOverrides() throws Exception {
+        Path file = directory.resolve("localization.yml");
+        YamlConfiguration config;
+        try (var reader =
+                new InputStreamReader(
+                        getClass().getResourceAsStream("/signatures.yml"),
+                        StandardCharsets.UTF_8)) {
+            config = YamlConfiguration.loadConfiguration(reader);
+        }
+        config.set("signatures.cooldownhud-memoryleakfix-localization", null);
+        config.set("signatures.cooldownhud-memoryleakfix.enabled", false);
+        config.save(file.toFile());
+        var profiles = migrate(file);
+        var added =
+                profiles.stream()
+                        .filter(p -> p.id().equals("cooldownhud-memoryleakfix-localization"))
+                        .findFirst()
+                        .orElseThrow();
+        assertEquals(SignatureCheck.ProbeFormat.THREE_TRANSLATIONS, added.probeFormat());
+        assertTrue(added.requireTranslations());
+        assertEquals("activity.module.auto_anchor.name", added.third().key());
+        assertEquals(SignatureCheck.Action.BAN, added.action());
+        assertTrue(profiles.stream().noneMatch(p -> p.id().equals("cooldownhud-memoryleakfix")));
+        String once = Files.readString(file);
+        migrate(file);
+        assertEquals(once, Files.readString(file));
+    }
+
+    @Test
     void invalidActionDoesNotSavePartialMigration() throws Exception {
         Path file = directory.resolve("signatures.yml");
         String original =

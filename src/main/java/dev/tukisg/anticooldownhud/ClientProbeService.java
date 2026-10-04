@@ -110,7 +110,7 @@ final class ClientProbeService implements Listener, AutoCloseable {
                         if (probe == null
                                 || probe.wireChecked.get()
                                 || probe.challenge.profile().probeFormat()
-                                        != SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT) return;
+                                        == SignatureCheck.ProbeFormat.DIRECT) return;
                         var packet = new WrapperPlayServerBlockEntityData(event);
                         if (!probe.position.equals(packet.getPosition())) return;
                         var result = ProbeWire.verify(packet.getNBT(), probe.challenge);
@@ -269,8 +269,7 @@ final class ClientProbeService implements Listener, AutoCloseable {
             return;
         }
         String detail = ProbeDiagnostics.detail(probe.challenge, lines);
-        if (probe.challenge.profile().probeFormat()
-                == SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT) {
+        if (probe.challenge.profile().probeFormat() != SignatureCheck.ProbeFormat.DIRECT) {
             detail += ", wire=" + probe.wire;
         }
         advance(probe.player, probe.session, probe.session.reply(probe.challenge, lines), detail);

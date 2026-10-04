@@ -68,7 +68,10 @@ final class SignatureCatalog {
                                             .toUpperCase(Locale.ROOT)),
                             SignatureCheck.ProbeFormat.valueOf(
                                     entry.getString("probe-format", "DIRECT")
-                                            .toUpperCase(Locale.ROOT))));
+                                            .toUpperCase(Locale.ROOT)),
+                            entry.isConfigurationSection("third")
+                                    ? translation(entry, "third")
+                                    : null));
         }
         if (profiles.isEmpty() || profiles.size() > 64)
             throw new IllegalArgumentException("Enable between 1 and 64 signatures");

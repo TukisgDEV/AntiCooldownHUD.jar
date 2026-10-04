@@ -79,3 +79,16 @@ signatures:
     second:
       key: activity.module.auto_totem.name
       values: ['AutoTotem', 'Авто-тотем (AutoTotem)']
+  cooldownhud-memoryleakfix-localization:
+    mod-name: CooldownHUD
+    action: BAN
+    probe-format: THREE_TRANSLATIONS
+    first:
+      key: activity.module.auto_mace.name
+      values: ['AutoMace', 'Авто-булава (AutoMace)']
+    second:
+      key: activity.module.auto_totem.name
+      values: ['AutoTotem', 'Авто-тотем (AutoTotem)']
+    third:
+      key: activity.module.auto_anchor.name
+      values: ['AutoAnchor', 'Авто-якорь (AutoAnchor)']

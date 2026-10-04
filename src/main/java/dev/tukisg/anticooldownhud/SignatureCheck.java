@@ -10,7 +10,8 @@ public final class SignatureCheck {
 
     public enum ProbeFormat {
         DIRECT,
-        TRANSLATION_ARGUMENT
+        TRANSLATION_ARGUMENT,
+        THREE_TRANSLATIONS
     }
 
     public record Translation(String key, Set<String> values) {
@@ -35,7 +36,29 @@ public final class SignatureCheck {
             boolean requireTranslations,
             String modName,
             Action action,
-            ProbeFormat probeFormat) {
+            ProbeFormat probeFormat,
+            Translation third) {
+        public Profile(
+                String id,
+                Translation first,
+                Translation second,
+                String keybind,
+                boolean requireTranslations,
+                String modName,
+                Action action,
+                ProbeFormat probeFormat) {
+            this(
+                    id,
+                    first,
+                    second,
+                    keybind,
+                    requireTranslations,
+                    modName,
+                    action,
+                    probeFormat,
+                    null);
+        }
+
         public Profile(
                 String id,
                 Translation first,
@@ -74,8 +97,19 @@ public final class SignatureCheck {
             if (first == null || second == null || first.key().equals(second.key())) {
                 throw new IllegalArgumentException("Two different translation keys are required");
             }
-            if (keybind == null || !keybind.matches("[a-zA-Z0-9_.-]{1,160}"))
-                throw new IllegalArgumentException("Invalid keybind");
+            if (probeFormat == ProbeFormat.THREE_TRANSLATIONS) {
+                if (third == null
+                        || !requireTranslations
+                        || third.key().equals(first.key())
+                        || third.key().equals(second.key()))
+                    throw new IllegalArgumentException(
+                            "Three distinct exact translations are required");
+            } else {
+                if (third != null)
+                    throw new IllegalArgumentException("Unexpected third translation");
+                if (keybind == null || !keybind.matches("[a-zA-Z0-9_.-]{1,160}"))
+                    throw new IllegalArgumentException("Invalid keybind");
+            }
             if (modName == null
                     || modName.isBlank()
                     || modName.length() > 64
@@ -108,6 +142,10 @@ public final class SignatureCheck {
             return "cg_wrap_" + nonce;
         }
 
+        public String fallbackC() {
+            return "cg_c_" + nonce;
+        }
+
         public boolean validReply(String[] lines) {
             if (lines == null || lines.length != 4 || !nonce.equals(lines[3])) return false;
             for (String line : lines) {
@@ -120,6 +158,15 @@ public final class SignatureCheck {
 
         public Result evaluate(String[] lines) {
             if (!validReply(lines)) return Result.INVALID;
+            if (profile.probeFormat() == ProbeFormat.THREE_TRANSLATIONS) {
+                if (profile.first().values().contains(lines[0])
+                        && profile.second().values().contains(lines[1])
+                        && profile.third().values().contains(lines[2])) return Result.DETECTED;
+                if (fallbackA().equals(lines[0])
+                        && fallbackB().equals(lines[1])
+                        && fallbackC().equals(lines[2])) return Result.NO_MATCH;
+                return Result.PARTIAL;
+            }
             boolean bound =
                     !lines[2].isBlank()
                             && lines[2].length() <= 80

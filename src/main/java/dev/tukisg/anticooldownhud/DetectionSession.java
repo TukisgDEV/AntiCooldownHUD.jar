@@ -51,7 +51,9 @@ final class DetectionSession {
         }
         if (matches > 0 || result == SignatureCheck.Result.PARTIAL) partial = true;
         matches = 0;
-        if (profile().keybind().equals(lines[2])) missingKeybinds.add(MissingKey.of(profile()));
+        if (profile().probeFormat() != SignatureCheck.ProbeFormat.THREE_TRANSLATIONS
+                && profile().keybind().equals(lines[2]))
+            missingKeybinds.add(MissingKey.of(profile()));
         do {
             index++;
         } while (index < profiles.size() && missingKeybinds.contains(MissingKey.of(profile())));

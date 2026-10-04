@@ -14,7 +14,9 @@ final class ProbeText {
                 wrap(
                         challenge,
                         Component.translatable(profile.second().key(), challenge.fallbackB())),
-                wrap(challenge, Component.keybind(profile.keybind())),
+                profile.probeFormat() == SignatureCheck.ProbeFormat.THREE_TRANSLATIONS
+                        ? Component.translatable(profile.third().key(), challenge.fallbackC())
+                        : wrap(challenge, Component.keybind(profile.keybind())),
                 Component.text(challenge.nonce()));
     }
 

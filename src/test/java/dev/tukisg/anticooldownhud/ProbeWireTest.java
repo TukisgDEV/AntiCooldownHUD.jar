@@ -60,7 +60,12 @@ class ProbeWireTest {
             assertEquals(expected.get(i), SERIALIZER.deserialize(messages.getTag(i)));
         for (int i = 0; i < 3; i++) {
             var text = (TranslatableComponent) SERIALIZER.deserialize(messages.getTag(i));
-            assertEquals(1, text.arguments().size());
+            assertEquals(
+                    challenge.profile().probeFormat()
+                                    == SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT
+                            ? 1
+                            : 0,
+                    text.arguments().size());
         }
     }
 
@@ -148,6 +153,25 @@ class ProbeWireTest {
         assertIntact(decoded, challenge);
         assertEquals("intact", ProbeWire.verify(decoded, challenge).status());
         assertTrue(bytes.size() < 4096);
+    }
+
+    @Test
+    void threeTranslationPacketPreservesAndRepairsTheThirdSignature() throws Exception {
+        var profile =
+                SignatureCheckTest.catalog().stream()
+                        .filter(p -> p.id().equals("cooldownhud-memoryleakfix-localization"))
+                        .findFirst()
+                        .orElseThrow();
+        var challenge = new SignatureCheck.Challenge(profile, "tripleWire123");
+        var packet = packet(challenge);
+        assertEquals("intact", ProbeWire.verify(packet, challenge).status());
+        assertIntact(packet, challenge);
+        var changed = new NBTCompound();
+        changed.setTag("text", new NBTString(challenge.fallbackC()));
+        messages(packet).setTag(2, changed);
+        var result = ProbeWire.verify(packet, challenge);
+        assertEquals("repaired", result.status());
+        assertIntact(result.data(), challenge);
     }
 
     @Test

@@ -8,6 +8,23 @@ import org.junit.jupiter.api.Test;
 
 class ProbeDiagnosticsTest {
     @Test
+    void thirdTranslationIsReportedAsExactSignatureWithoutLeakingNonce() throws Exception {
+        var profile =
+                catalog().stream()
+                        .filter(p -> p.id().equals("cooldownhud-memoryleakfix-localization"))
+                        .findFirst()
+                        .orElseThrow();
+        var challenge = new SignatureCheck.Challenge(profile, "thirdNonce123");
+        var reply = match(challenge);
+        reply[2] = challenge.fallbackC();
+        String detail = ProbeDiagnostics.detail(challenge, reply);
+        assertTrue(detail.contains("first=true, second=true, third=false"));
+        assertTrue(detail.contains("<fallbackC>"));
+        assertFalse(detail.contains("key="));
+        assertFalse(detail.contains(challenge.nonce()));
+    }
+
+    @Test
     void wrapperFallbackIsDistinctFromLiteralFormatAndDoesNotExposeNonce() throws Exception {
         var profile =
                 catalog().stream()
