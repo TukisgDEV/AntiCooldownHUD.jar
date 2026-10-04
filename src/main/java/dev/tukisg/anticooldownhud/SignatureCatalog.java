@@ -65,6 +65,9 @@ final class SignatureCatalog {
                                     entry.getString(
                                                     "action",
                                                     id.startsWith("freecam-") ? "KICK" : "BAN")
+                                            .toUpperCase(Locale.ROOT)),
+                            SignatureCheck.ProbeFormat.valueOf(
+                                    entry.getString("probe-format", "DIRECT")
                                             .toUpperCase(Locale.ROOT))));
         }
         if (profiles.isEmpty() || profiles.size() > 64)

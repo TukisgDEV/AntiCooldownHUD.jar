@@ -16,7 +16,14 @@ final class DetectionSession {
 
     private final List<SignatureCheck.Profile> profiles;
     private final int maxRetries;
-    private final Set<String> missingKeybinds = new HashSet<>();
+
+    private record MissingKey(SignatureCheck.ProbeFormat format, String keybind) {
+        static MissingKey of(SignatureCheck.Profile profile) {
+            return new MissingKey(profile.probeFormat(), profile.keybind());
+        }
+    }
+
+    private final Set<MissingKey> missingKeybinds = new HashSet<>();
     private int index;
     private int matches;
     private int retries;
@@ -44,10 +51,10 @@ final class DetectionSession {
         }
         if (matches > 0 || result == SignatureCheck.Result.PARTIAL) partial = true;
         matches = 0;
-        if (profile().keybind().equals(lines[2])) missingKeybinds.add(profile().keybind());
+        if (profile().keybind().equals(lines[2])) missingKeybinds.add(MissingKey.of(profile()));
         do {
             index++;
-        } while (index < profiles.size() && missingKeybinds.contains(profile().keybind()));
+        } while (index < profiles.size() && missingKeybinds.contains(MissingKey.of(profile())));
         if (index < profiles.size()) return Step.NEXT;
         return partial ? Step.INCONCLUSIVE : Step.NO_MATCH;
     }

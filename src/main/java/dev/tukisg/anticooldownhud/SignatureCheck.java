@@ -8,6 +8,11 @@ public final class SignatureCheck {
         KICK
     }
 
+    public enum ProbeFormat {
+        DIRECT,
+        TRANSLATION_ARGUMENT
+    }
+
     public record Translation(String key, Set<String> values) {
         public Translation {
             if (key == null || !key.matches("[a-zA-Z0-9_.-]{1,160}")) {
@@ -29,7 +34,27 @@ public final class SignatureCheck {
             String keybind,
             boolean requireTranslations,
             String modName,
-            Action action) {
+            Action action,
+            ProbeFormat probeFormat) {
+        public Profile(
+                String id,
+                Translation first,
+                Translation second,
+                String keybind,
+                boolean requireTranslations,
+                String modName,
+                Action action) {
+            this(
+                    id,
+                    first,
+                    second,
+                    keybind,
+                    requireTranslations,
+                    modName,
+                    action,
+                    ProbeFormat.DIRECT);
+        }
+
         public Profile(String id, Translation first, Translation second, String keybind) {
             this(id, first, second, keybind, true);
         }
@@ -55,7 +80,8 @@ public final class SignatureCheck {
                     || modName.isBlank()
                     || modName.length() > 64
                     || modName.chars().anyMatch(Character::isISOControl)
-                    || action == null)
+                    || action == null
+                    || probeFormat == null)
                 throw new IllegalArgumentException("Invalid mod name or action");
         }
 

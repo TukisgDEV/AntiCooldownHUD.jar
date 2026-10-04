@@ -55,7 +55,10 @@ class DetectionSessionTest {
         assertEquals(NEXT, session.reply(challenge, vanilla(challenge)));
         assertEquals("freecam-legacy", session.profile().id());
         var freecam = new SignatureCheck.Challenge(session.profile(), "vanillaFreecam123");
-        assertEquals(NO_MATCH, session.reply(freecam, vanilla(freecam)));
+        assertEquals(NEXT, session.reply(freecam, vanilla(freecam)));
+        assertEquals("cooldownhud-memoryleakfix", session.profile().id());
+        var nested = new SignatureCheck.Challenge(session.profile(), "vanillaNested123");
+        assertEquals(NO_MATCH, session.reply(nested, vanilla(nested)));
     }
 
     @Test

@@ -9,8 +9,6 @@ import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientUpdateSign;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenSignEditor;
 
-import net.kyori.adventure.text.Component;
-
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.Material;
@@ -202,12 +200,8 @@ final class ClientProbeService implements Listener, AutoCloseable {
             Sign sign = (Sign) Material.OAK_SIGN.createBlockData().createBlockState();
             var front = sign.getSide(Side.FRONT);
             SignatureCheck.Profile profile = probe.challenge.profile();
-            front.line(
-                    0, Component.translatable(profile.first().key(), probe.challenge.fallbackA()));
-            front.line(
-                    1, Component.translatable(profile.second().key(), probe.challenge.fallbackB()));
-            front.line(2, Component.keybind(profile.keybind()));
-            front.line(3, Component.text(probe.challenge.nonce()));
+            var lines = ProbeText.lines(probe.challenge);
+            for (int i = 0; i < lines.size(); i++) front.line(i, lines.get(i));
             player.sendBlockChange(probe.location, sign.getBlockData());
             player.sendBlockUpdate(probe.location, sign);
             PacketEvents.getAPI()

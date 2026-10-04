@@ -102,6 +102,31 @@ class SignatureCatalogTest {
     }
 
     @Test
+    void existingConfigurationGainsNestedProfileAndPreservesAnExplicitDisable() throws Exception {
+        Path file = directory.resolve("nested-signatures.yml");
+        YamlConfiguration config;
+        try (var reader =
+                new InputStreamReader(
+                        getClass().getResourceAsStream("/signatures.yml"),
+                        StandardCharsets.UTF_8)) {
+            config = YamlConfiguration.loadConfiguration(reader);
+        }
+        config.set("signatures.cooldownhud-memoryleakfix", null);
+        config.save(file.toFile());
+        var added =
+                migrate(file).stream()
+                        .filter(p -> p.id().equals("cooldownhud-memoryleakfix"))
+                        .findFirst()
+                        .orElseThrow();
+        assertEquals(SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT, added.probeFormat());
+        assertEquals(SignatureCheck.Action.BAN, added.action());
+        config = YamlConfiguration.loadConfiguration(file.toFile());
+        config.set("signatures.cooldownhud-memoryleakfix.enabled", false);
+        config.save(file.toFile());
+        assertTrue(migrate(file).stream().noneMatch(p -> p.id().equals(added.id())));
+    }
+
+    @Test
     void invalidActionDoesNotSavePartialMigration() throws Exception {
         Path file = directory.resolve("signatures.yml");
         String original =

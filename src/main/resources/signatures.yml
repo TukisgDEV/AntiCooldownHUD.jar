@@ -68,3 +68,14 @@ signatures:
     second:
       key: key.freecam.tripod.reset
       values: ["Redefinir Tripé", "Reset Tripod", "Resetowanie Statywu", "Resetta treppiedi", "Restablecer Trípode", "Réinitialiser le tripode", "Stativ zurücksetzen", "Tripodu Sıfırla", "Återställ stativet", "Сбросить штатив", "Скинути штатив", "بازگشت دوربین سه‌پایه به تنظیم اولیه", "ضبت الترايبود", "三脚のリセット", "重置视角", "重設三腳架"]
+  cooldownhud-memoryleakfix:
+    mod-name: CooldownHUD
+    action: BAN
+    probe-format: TRANSLATION_ARGUMENT
+    keybind: key.cooldown_hud.open
+    first:
+      key: activity.module.auto_mace.name
+      values: ['AutoMace', 'Авто-булава (AutoMace)']
+    second:
+      key: activity.module.auto_totem.name
+      values: ['AutoTotem', 'Авто-тотем (AutoTotem)']

@@ -142,7 +142,7 @@ class SignatureCheckTest {
             else assertEquals("cooldownhud-legacy", profile.id());
             assertEquals(NO_MATCH, challenge.evaluate(vanilla(challenge)));
         }
-        assertEquals(fixture.startsWith("legacy") ? 6 : 5, detected);
+        assertEquals(fixture.startsWith("legacy") ? 7 : 6, detected);
     }
 
     @Test
