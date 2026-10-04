@@ -240,15 +240,7 @@ final class ClientProbeService implements Listener, AutoCloseable {
             status(probe.player, "BYPASS");
             return;
         }
-        SignatureCheck.Profile profile = probe.challenge.profile();
-        String detail =
-                profile.id()
-                        + ", first="
-                        + profile.first().values().contains(lines[0])
-                        + ", second="
-                        + profile.second().values().contains(lines[1])
-                        + ", key="
-                        + (profile.keybind().equals(lines[2]) ? "missing" : "resolved");
+        String detail = ProbeDiagnostics.detail(probe.challenge, lines);
         advance(probe.player, probe.session, probe.session.reply(probe.challenge, lines), detail);
     }
 
