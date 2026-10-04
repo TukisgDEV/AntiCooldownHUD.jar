@@ -8,6 +8,46 @@ import org.junit.jupiter.api.Test;
 
 class ProbeDiagnosticsTest {
     @Test
+    void wrapperFallbackIsDistinctFromLiteralFormatAndDoesNotExposeNonce() throws Exception {
+        var profile =
+                catalog().stream()
+                        .filter(p -> p.id().equals("cooldownhud-memoryleakfix"))
+                        .findFirst()
+                        .orElseThrow();
+        var challenge = new SignatureCheck.Challenge(profile, "wrapperNonce123");
+        String fallback =
+                ProbeDiagnostics.detail(
+                        challenge,
+                        new String[] {
+                            challenge.wrapperFallback(),
+                            challenge.wrapperFallback(),
+                            challenge.wrapperFallback(),
+                            challenge.nonce()
+                        });
+        assertTrue(fallback.contains("wrapper=fallback"));
+        assertTrue(fallback.contains("<wrapperFallback>"));
+        assertFalse(fallback.contains(challenge.nonce()));
+        String literal =
+                ProbeDiagnostics.detail(
+                        challenge, new String[] {"%s", "%s", "%s", challenge.nonce()});
+        assertTrue(literal.contains("wrapper=literal-format"));
+        assertFalse(literal.contains("wrapper=fallback"));
+    }
+
+    @Test
+    void wrapperFallbackCannotCountAsResolvedKey() throws Exception {
+        var profile =
+                catalog().stream()
+                        .filter(p -> p.id().equals("cooldownhud-memoryleakfix"))
+                        .findFirst()
+                        .orElseThrow();
+        var challenge = new SignatureCheck.Challenge(profile, "wrapperNonce123");
+        var reply = match(challenge);
+        reply[2] = challenge.wrapperFallback();
+        assertEquals(SignatureCheck.Result.PARTIAL, challenge.evaluate(reply));
+    }
+
+    @Test
     void emptyReplyDoesNotClaimResolvedKey() {
         String detail =
                 ProbeDiagnostics.detail(CHALLENGE, new String[] {"", "", "", CHALLENGE.nonce()});

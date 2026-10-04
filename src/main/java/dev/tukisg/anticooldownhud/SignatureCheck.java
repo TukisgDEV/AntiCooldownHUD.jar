@@ -104,6 +104,10 @@ public final class SignatureCheck {
             return "cg_b_" + nonce;
         }
 
+        public String wrapperFallback() {
+            return "cg_wrap_" + nonce;
+        }
+
         public boolean validReply(String[] lines) {
             if (lines == null || lines.length != 4 || !nonce.equals(lines[3])) return false;
             for (String line : lines) {
@@ -122,6 +126,7 @@ public final class SignatureCheck {
                             && !lines[2].equals(profile.keybind())
                             && !lines[2].equals(nonce)
                             && !lines[2].equals(fallbackA())
+                            && !lines[2].equals(wrapperFallback())
                             && !lines[2].equals(fallbackB());
             if (bound
                     && (!profile.requireTranslations()

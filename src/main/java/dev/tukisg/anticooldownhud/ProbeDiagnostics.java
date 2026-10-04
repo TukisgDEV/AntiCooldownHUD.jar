@@ -16,6 +16,17 @@ final class ProbeDiagnostics {
                         + ", key="
                         + key;
         if (challenge.evaluate(lines) == SignatureCheck.Result.PARTIAL) {
+            if (challenge.profile().probeFormat()
+                    == SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT) {
+                boolean wrapperFallback = false;
+                boolean formatLiteral = false;
+                for (int i = 0; i < 3; i++) {
+                    wrapperFallback |= challenge.wrapperFallback().equals(lines[i]);
+                    formatLiteral |= "%s".equals(lines[i]);
+                }
+                if (wrapperFallback) detail += ", wrapper=fallback";
+                else if (formatLiteral) detail += ", wrapper=literal-format";
+            }
             detail +=
                     ", reply=["
                             + quote(lines[0], challenge)
@@ -32,6 +43,7 @@ final class ProbeDiagnostics {
         value =
                 value.replace(challenge.fallbackA(), "<fallbackA>")
                         .replace(challenge.fallbackB(), "<fallbackB>")
+                        .replace(challenge.wrapperFallback(), "<wrapperFallback>")
                         .replace(challenge.nonce(), "<nonce>");
         StringBuilder result = new StringBuilder("\"");
         int limit = Math.min(value.length(), 120);

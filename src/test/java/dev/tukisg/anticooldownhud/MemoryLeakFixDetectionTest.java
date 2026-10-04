@@ -48,7 +48,7 @@ class MemoryLeakFixDetectionTest {
         }
         var text = (TranslatableComponent) component;
         if (text.key().equals("options.value")) {
-            assertEquals("%s", text.fallback());
+            assertTrue(text.fallback().startsWith("cg_wrap_"));
             assertEquals(1, text.arguments().size());
             String format = translations.getProperty("options.value", "%s");
             if (!format.equals("%s")) return format;

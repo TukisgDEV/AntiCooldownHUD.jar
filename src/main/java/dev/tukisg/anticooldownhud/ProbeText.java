@@ -8,17 +8,20 @@ final class ProbeText {
     static List<Component> lines(SignatureCheck.Challenge challenge) {
         var profile = challenge.profile();
         return List.of(
-                wrap(profile, Component.translatable(profile.first().key(), challenge.fallbackA())),
                 wrap(
-                        profile,
+                        challenge,
+                        Component.translatable(profile.first().key(), challenge.fallbackA())),
+                wrap(
+                        challenge,
                         Component.translatable(profile.second().key(), challenge.fallbackB())),
-                wrap(profile, Component.keybind(profile.keybind())),
+                wrap(challenge, Component.keybind(profile.keybind())),
                 Component.text(challenge.nonce()));
     }
 
-    private static Component wrap(SignatureCheck.Profile profile, Component content) {
-        return profile.probeFormat() == SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT
-                ? Component.translatable("options.value", "%s").arguments(content)
+    private static Component wrap(SignatureCheck.Challenge challenge, Component content) {
+        return challenge.profile().probeFormat() == SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT
+                ? Component.translatable("options.value", challenge.wrapperFallback())
+                        .arguments(content)
                 : content;
     }
 

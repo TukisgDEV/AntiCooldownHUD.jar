@@ -4,9 +4,11 @@ import com.github.retrooper.packetevents.PacketEvents;
 import com.github.retrooper.packetevents.event.PacketListenerAbstract;
 import com.github.retrooper.packetevents.event.PacketListenerPriority;
 import com.github.retrooper.packetevents.event.PacketReceiveEvent;
+import com.github.retrooper.packetevents.event.PacketSendEvent;
 import com.github.retrooper.packetevents.protocol.packettype.PacketType;
 import com.github.retrooper.packetevents.util.Vector3i;
 import com.github.retrooper.packetevents.wrapper.play.client.WrapperPlayClientUpdateSign;
+import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerBlockEntityData;
 import com.github.retrooper.packetevents.wrapper.play.server.WrapperPlayServerOpenSignEditor;
 
 import org.bukkit.Bukkit;
@@ -57,6 +59,8 @@ final class ClientProbeService implements Listener, AutoCloseable {
         final DetectionSession session;
         final SignatureCheck.Challenge challenge;
         final AtomicBoolean submitted = new AtomicBoolean();
+        final AtomicBoolean wireChecked = new AtomicBoolean();
+        volatile String wire = "not-observed";
         BukkitTask expiry;
 
         Probe(Player player, Location location, DetectionSession session) {
@@ -95,6 +99,30 @@ final class ClientProbeService implements Listener, AutoCloseable {
         this.detected = detected;
         listener =
                 new PacketListenerAbstract(PacketListenerPriority.HIGHEST) {
+                    @Override
+                    public void onPacketSend(PacketSendEvent event) {
+                        if (closed
+                                || event.getPacketType()
+                                        != PacketType.Play.Server.BLOCK_ENTITY_DATA) return;
+                        UUID uuid = event.getUser().getUUID();
+                        if (uuid == null) return;
+                        Probe probe = probes.get(uuid);
+                        if (probe == null
+                                || probe.wireChecked.get()
+                                || probe.challenge.profile().probeFormat()
+                                        != SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT) return;
+                        var packet = new WrapperPlayServerBlockEntityData(event);
+                        if (!probe.position.equals(packet.getPosition())) return;
+                        var result = ProbeWire.verify(packet.getNBT(), probe.challenge);
+                        if (result.status().equals("unrelated")) return;
+                        if (!probe.wireChecked.compareAndSet(false, true)) return;
+                        probe.wire = result.status();
+                        if (result.status().equals("repaired")) {
+                            packet.setNBT(result.data());
+                            event.markForReEncode(true);
+                        }
+                    }
+
                     @Override
                     public void onPacketReceive(PacketReceiveEvent event) {
                         if (closed || event.getPacketType() != PacketType.Play.Client.UPDATE_SIGN)
@@ -199,7 +227,6 @@ final class ClientProbeService implements Listener, AutoCloseable {
         try {
             Sign sign = (Sign) Material.OAK_SIGN.createBlockData().createBlockState();
             var front = sign.getSide(Side.FRONT);
-            SignatureCheck.Profile profile = probe.challenge.profile();
             var lines = ProbeText.lines(probe.challenge);
             for (int i = 0; i < lines.size(); i++) front.line(i, lines.get(i));
             player.sendBlockChange(probe.location, sign.getBlockData());
@@ -218,7 +245,8 @@ final class ClientProbeService implements Listener, AutoCloseable {
                                                 player,
                                                 session,
                                                 session.timeout(),
-                                                "no valid reply: " + profile.id());
+                                                "no valid reply: "
+                                                        + probe.challenge.profile().id());
                                     },
                                     settings.timeout());
         } catch (RuntimeException exception) {
@@ -241,6 +269,10 @@ final class ClientProbeService implements Listener, AutoCloseable {
             return;
         }
         String detail = ProbeDiagnostics.detail(probe.challenge, lines);
+        if (probe.challenge.profile().probeFormat()
+                == SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT) {
+            detail += ", wire=" + probe.wire;
+        }
         advance(probe.player, probe.session, probe.session.reply(probe.challenge, lines), detail);
     }
 
