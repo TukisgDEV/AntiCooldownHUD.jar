@@ -125,6 +125,10 @@ public final class SignatureCheck {
     }
 
     public record Challenge(Profile profile, String nonce) {
+        private static final int[][] ORDERS = {
+            {0, 1, 2}, {0, 2, 1}, {1, 0, 2}, {1, 2, 0}, {2, 0, 1}, {2, 1, 0}
+        };
+
         public Challenge {
             if (profile == null || nonce == null || !nonce.matches("[a-zA-Z0-9]{8,32}"))
                 throw new IllegalArgumentException("Invalid challenge");
@@ -146,6 +150,17 @@ public final class SignatureCheck {
             return "cg_c_" + nonce;
         }
 
+        public Translation translationAt(int line) {
+            if (profile.probeFormat() != ProbeFormat.THREE_TRANSLATIONS)
+                throw new IllegalStateException("Not a three-translation challenge");
+            if (line < 0 || line > 2) throw new IllegalArgumentException("Invalid line");
+            return switch (ORDERS[Math.floorMod(nonce.hashCode(), ORDERS.length)][line]) {
+                case 0 -> profile.first();
+                case 1 -> profile.second();
+                default -> profile.third();
+            };
+        }
+
         public boolean validReply(String[] lines) {
             if (lines == null || lines.length != 4 || !nonce.equals(lines[3])) return false;
             for (String line : lines) {
@@ -159,9 +174,9 @@ public final class SignatureCheck {
         public Result evaluate(String[] lines) {
             if (!validReply(lines)) return Result.INVALID;
             if (profile.probeFormat() == ProbeFormat.THREE_TRANSLATIONS) {
-                if (profile.first().values().contains(lines[0])
-                        && profile.second().values().contains(lines[1])
-                        && profile.third().values().contains(lines[2])) return Result.DETECTED;
+                if (translationAt(0).values().contains(lines[0])
+                        && translationAt(1).values().contains(lines[1])
+                        && translationAt(2).values().contains(lines[2])) return Result.DETECTED;
                 if (fallbackA().equals(lines[0])
                         && fallbackB().equals(lines[1])
                         && fallbackC().equals(lines[2])) return Result.NO_MATCH;

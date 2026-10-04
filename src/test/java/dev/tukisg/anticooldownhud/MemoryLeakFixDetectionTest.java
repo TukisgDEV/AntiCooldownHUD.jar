@@ -70,7 +70,9 @@ class MemoryLeakFixDetectionTest {
     void nestedComponentsResolveWhereBundledClientSpooferFiltersDirectComponents(String language)
             throws Exception {
         var data = translations(language);
-        var direct = new SignatureCheck.Challenge(catalog().getFirst(), "directNonce123");
+        var direct =
+                new SignatureCheck.Challenge(
+                        SignatureCheckTest.profile("cooldownhud-combat"), "directNonce123");
         assertEquals(SignatureCheck.Result.NO_MATCH, direct.evaluate(reply(direct, data, true)));
         var nested = new SignatureCheck.Challenge(profile(), "nestedNonce123");
         assertEquals(SignatureCheck.Result.DETECTED, nested.evaluate(reply(nested, data, true)));
@@ -137,7 +139,9 @@ class MemoryLeakFixDetectionTest {
 
     @Test
     void directProbeContentsAreUnchanged() throws Exception {
-        var challenge = new SignatureCheck.Challenge(catalog().getFirst(), "directCheck123");
+        var challenge =
+                new SignatureCheck.Challenge(
+                        SignatureCheckTest.profile("cooldownhud-combat"), "directCheck123");
         var lines = ProbeText.lines(challenge);
         assertEquals(
                 challenge.profile().first().key(), ((TranslatableComponent) lines.get(0)).key());

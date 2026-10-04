@@ -19,6 +19,15 @@ class ProbeDiagnosticsTest {
         reply[2] = challenge.fallbackC();
         String detail = ProbeDiagnostics.detail(challenge, reply);
         assertTrue(detail.contains("first=true, second=true, third=false"));
+        assertTrue(
+                detail.contains(
+                        "keys=["
+                                + challenge.translationAt(0).key()
+                                + ", "
+                                + challenge.translationAt(1).key()
+                                + ", "
+                                + challenge.translationAt(2).key()
+                                + "]"));
         assertTrue(detail.contains("<fallbackC>"));
         assertFalse(detail.contains("key="));
         assertFalse(detail.contains(challenge.nonce()));

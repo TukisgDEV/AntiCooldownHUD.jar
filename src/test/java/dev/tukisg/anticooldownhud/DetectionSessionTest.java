@@ -51,17 +51,21 @@ class DetectionSessionTest {
     void vanillaSkipsProfilesWithSameMissingKeyToSavePackets() throws Exception {
         var profiles = catalog();
         var session = new DetectionSession(profiles, 1);
-        var challenge = new SignatureCheck.Challenge(profiles.getFirst(), "vanilla123");
+        for (int i = 0; i < 3; i++) {
+            assertEquals(
+                    SignatureCheck.ProbeFormat.THREE_TRANSLATIONS, session.profile().probeFormat());
+            var triple = new SignatureCheck.Challenge(session.profile(), "vanillaTriple" + i);
+            assertEquals(NEXT, session.reply(triple, vanilla(triple)));
+        }
+        assertEquals("cooldownhud-combat", session.profile().id());
+        var challenge = new SignatureCheck.Challenge(session.profile(), "vanilla123");
         assertEquals(NEXT, session.reply(challenge, vanilla(challenge)));
         assertEquals("freecam-legacy", session.profile().id());
         var freecam = new SignatureCheck.Challenge(session.profile(), "vanillaFreecam123");
         assertEquals(NEXT, session.reply(freecam, vanilla(freecam)));
         assertEquals("cooldownhud-memoryleakfix", session.profile().id());
         var nested = new SignatureCheck.Challenge(session.profile(), "vanillaNested123");
-        assertEquals(NEXT, session.reply(nested, vanilla(nested)));
-        assertEquals("cooldownhud-memoryleakfix-localization", session.profile().id());
-        var localization = new SignatureCheck.Challenge(session.profile(), "vanillaLocal123");
-        assertEquals(NO_MATCH, session.reply(localization, vanilla(localization)));
+        assertEquals(NO_MATCH, session.reply(nested, vanilla(nested)));
     }
 
     @Test
@@ -78,6 +82,10 @@ class DetectionSessionTest {
     void translationlessOldVariantNeedsTwoFreshKeybindConfirmations() throws Exception {
         var profiles = catalog();
         var session = new DetectionSession(profiles, 1);
+        for (int i = 0; i < 3; i++) {
+            var triple = new SignatureCheck.Challenge(session.profile(), "legacyTriple" + i);
+            assertEquals(NEXT, session.reply(triple, vanilla(triple)));
+        }
         var initial = new SignatureCheck.Challenge(session.profile(), "initial12345");
         var lines = vanilla(initial);
         lines[2] = "H";

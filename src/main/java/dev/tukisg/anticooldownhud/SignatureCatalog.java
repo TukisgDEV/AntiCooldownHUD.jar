@@ -6,6 +6,7 @@ import org.bukkit.configuration.file.YamlConfiguration;
 import java.io.File;
 import java.io.Reader;
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -75,7 +76,18 @@ final class SignatureCatalog {
         }
         if (profiles.isEmpty() || profiles.size() > 64)
             throw new IllegalArgumentException("Enable between 1 and 64 signatures");
+        profiles.sort(
+                Comparator.comparingInt(
+                                (SignatureCheck.Profile profile) ->
+                                        entries.getInt(
+                                                profile.id() + ".priority",
+                                                defaultPriority(profile.id())))
+                        .reversed());
         return List.copyOf(profiles);
+    }
+
+    private static int defaultPriority(String id) {
+        return id.equals("cooldownhud-memoryleakfix-localization") ? 100 : 0;
     }
 
     private static SignatureCheck.Translation translation(ConfigurationSection entry, String name) {

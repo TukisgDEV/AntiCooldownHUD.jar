@@ -11,12 +11,15 @@ import net.kyori.adventure.text.TranslatableComponent;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.CsvSource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.io.InputStreamReader;
 import java.nio.charset.StandardCharsets;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Properties;
+import java.util.Set;
 
 class MemoryLeakFixLocalizationTest {
     private static SignatureCheck.Profile profile() throws Exception {
@@ -72,6 +75,110 @@ class MemoryLeakFixLocalizationTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"en_us", "ru_ru"})
+    void allSixOrdersResolveAndWrongOrderDoesNotMatch(String language) throws Exception {
+        var mod = translations(language);
+        var orders = new HashSet<List<String>>();
+        for (int i = 0; i < 6; i++) {
+            var challenge = new SignatureCheck.Challenge(profile(), "orderNonce" + i);
+            var keys =
+                    ProbeText.lines(challenge).subList(0, 3).stream()
+                            .map(c -> ((TranslatableComponent) c).key())
+                            .toList();
+            assertEquals(
+                    Set.of(
+                            profile().first().key(),
+                            profile().second().key(),
+                            profile().third().key()),
+                    Set.copyOf(keys));
+            orders.add(keys);
+            var response = reply(challenge, mod, true);
+            assertEquals(SignatureCheck.Result.DETECTED, challenge.evaluate(response));
+            String temp = response[0];
+            response[0] = response[1];
+            response[1] = temp;
+            assertEquals(SignatureCheck.Result.PARTIAL, challenge.evaluate(response));
+        }
+        assertEquals(6, orders.size());
+    }
+
+    @Test
+    void copiedValuesWithOnlyANewNonceCannotConfirmDifferentOrder() throws Exception {
+        var first = new SignatureCheck.Challenge(profile(), "orderNonce0");
+        var second = new SignatureCheck.Challenge(profile(), "orderNonce1");
+        var session = new DetectionSession(List.of(profile()), 1);
+        var old = reply(first, translations("en_us"), true);
+        assertEquals(DetectionSession.Step.CONFIRM, session.reply(first, old));
+        old[3] = second.nonce();
+        assertEquals(DetectionSession.Step.INCONCLUSIVE, session.reply(second, old));
+    }
+
+    @ParameterizedTest
+    @CsvSource({"en_us,1", "ru_ru,1", "en_us,2", "ru_ru,2"})
+    void independentBackupGroupsDetectWhenEarlierStringsAreRemoved(
+            String language, int missingGroups) throws Exception {
+        var mod = translations(language);
+        var profiles = catalog();
+        for (int i = 0; i < missingGroups; i++) {
+            var p = profiles.get(i);
+            mod.remove(p.first().key());
+            mod.remove(p.second().key());
+            mod.remove(p.third().key());
+        }
+        var session = new DetectionSession(profiles, 1);
+        for (int i = 0; i < missingGroups; i++) {
+            var challenge = new SignatureCheck.Challenge(session.profile(), "removedGroup" + i);
+            assertEquals(
+                    DetectionSession.Step.NEXT,
+                    session.reply(challenge, reply(challenge, mod, true)));
+        }
+        assertEquals(profiles.get(missingGroups), session.profile());
+        var first = new SignatureCheck.Challenge(session.profile(), "backupFirst123");
+        var second = new SignatureCheck.Challenge(session.profile(), "backupSecond123");
+        assertEquals(DetectionSession.Step.CONFIRM, session.reply(first, reply(first, mod, true)));
+        assertEquals(
+                DetectionSession.Step.DETECTED, session.reply(second, reply(second, mod, true)));
+    }
+
+    @Test
+    void partialMatchesFromDifferentGroupsDoNotAddUpToABan() throws Exception {
+        var mod = translations("en_us");
+        var profiles = catalog();
+        for (var p : profiles) {
+            if (p.probeFormat() == SignatureCheck.ProbeFormat.THREE_TRANSLATIONS)
+                mod.remove(p.first().key());
+        }
+        var session = new DetectionSession(profiles, 1);
+        for (int i = 0; i < profiles.size() + 1; i++) {
+            var challenge = new SignatureCheck.Challenge(session.profile(), "partialGroup" + i);
+            var step = session.reply(challenge, reply(challenge, mod, true));
+            if (step == DetectionSession.Step.INCONCLUSIVE) return;
+            assertEquals(DetectionSession.Step.NEXT, step);
+        }
+        fail("Expected a bounded inconclusive result");
+    }
+
+    @Test
+    void allThreeGroupsUseDistinctKeysFromTheSuppliedJar() throws Exception {
+        var mod = translations("en_us");
+        var keys = new HashSet<String>();
+        var triples =
+                catalog().stream()
+                        .filter(
+                                p ->
+                                        p.probeFormat()
+                                                == SignatureCheck.ProbeFormat.THREE_TRANSLATIONS)
+                        .toList();
+        assertEquals(3, triples.size());
+        for (var p : triples)
+            for (var translation : List.of(p.first(), p.second(), p.third())) {
+                assertTrue(keys.add(translation.key()));
+                assertTrue(translation.values().contains(mod.getProperty(translation.key())));
+            }
+        assertEquals(9, keys.size());
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"en_us", "ru_ru"})
     void reproducesObservedWrapperFallbackAndDetectsThroughActivityLanguageOverride(String language)
             throws Exception {
         var mod = translations(language);
@@ -98,8 +205,7 @@ class MemoryLeakFixLocalizationTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"en_us", "ru_ru"})
-    void fullSessionReachesThreeTranslationsAfterMissingKeyAndRequiresFreshConfirmation(
-            String language) throws Exception {
+    void workingSignatureRunsFirstAndRequiresOnlyTwoFreshReplies(String language) throws Exception {
         var session = new DetectionSession(catalog(), 1);
         var mod = translations(language);
         int confirmations = 0;
@@ -109,6 +215,7 @@ class MemoryLeakFixLocalizationTest {
             if (step == DetectionSession.Step.CONFIRM) confirmations++;
             else if (step == DetectionSession.Step.DETECTED) {
                 assertEquals(1, confirmations);
+                assertEquals(1, i);
                 assertEquals(profile(), challenge.profile());
                 return;
             } else assertEquals(DetectionSession.Step.NEXT, step);
@@ -154,10 +261,9 @@ class MemoryLeakFixLocalizationTest {
                         challenge.fallbackC(),
                         challenge.wrapperFallback(),
                         "AutoAnchor suffix")) {
-            assertEquals(
-                    SignatureCheck.Result.PARTIAL,
-                    challenge.evaluate(
-                            new String[] {"AutoMace", "AutoTotem", third, challenge.nonce()}));
+            String[] lines = match(challenge);
+            lines[2] = third;
+            assertEquals(SignatureCheck.Result.PARTIAL, challenge.evaluate(lines));
         }
     }
 

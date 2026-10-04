@@ -156,6 +156,38 @@ class SignatureCatalogTest {
     }
 
     @Test
+    void prioritizesWorkingSignatureInOldConfigWithoutReplacingExplicitPriority() throws Exception {
+        Path file = directory.resolve("priority.yml");
+        YamlConfiguration config;
+        try (var reader =
+                new InputStreamReader(
+                        getClass().getResourceAsStream("/signatures.yml"),
+                        StandardCharsets.UTF_8)) {
+            config = YamlConfiguration.loadConfiguration(reader);
+        }
+        config.set("signatures.cooldownhud-memoryleakfix-localization.priority", null);
+        config.set("signatures.cooldownhud-memoryleakfix-combat", null);
+        config.set("signatures.cooldownhud-memoryleakfix-utility", null);
+        config.set("signatures.cooldownhud-legacy.first.values", java.util.List.of("Custom text"));
+        config.save(file.toFile());
+        var profiles = migrate(file);
+        assertEquals("cooldownhud-memoryleakfix-localization", profiles.get(0).id());
+        assertEquals("cooldownhud-memoryleakfix-combat", profiles.get(1).id());
+        assertEquals("cooldownhud-memoryleakfix-utility", profiles.get(2).id());
+        config = YamlConfiguration.loadConfiguration(file.toFile());
+        assertEquals(
+                java.util.List.of("Custom text"),
+                config.getStringList("signatures.cooldownhud-legacy.first.values"));
+        config.set("signatures.cooldownhud-memoryleakfix-localization.priority", -1);
+        config.save(file.toFile());
+        assertEquals("cooldownhud-memoryleakfix-combat", migrate(file).getFirst().id());
+        assertEquals(
+                -1,
+                YamlConfiguration.loadConfiguration(file.toFile())
+                        .getInt("signatures.cooldownhud-memoryleakfix-localization.priority"));
+    }
+
+    @Test
     void invalidActionDoesNotSavePartialMigration() throws Exception {
         Path file = directory.resolve("signatures.yml");
         String original =

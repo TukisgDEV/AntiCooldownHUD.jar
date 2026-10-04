@@ -6,7 +6,7 @@
 
     <groupId>dev.tukisg</groupId>
     <artifactId>AntiCooldownHUD</artifactId>
-    <version>1.3.3</version>
+    <version>1.3.4</version>
 
     <name>AntiCooldownHUD</name>
     <description>CooldownHUD client signature checks for Paper hubs.</description>

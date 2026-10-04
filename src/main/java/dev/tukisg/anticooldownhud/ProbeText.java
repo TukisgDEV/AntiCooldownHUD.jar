@@ -7,6 +7,13 @@ import java.util.List;
 final class ProbeText {
     static List<Component> lines(SignatureCheck.Challenge challenge) {
         var profile = challenge.profile();
+        if (profile.probeFormat() == SignatureCheck.ProbeFormat.THREE_TRANSLATIONS) {
+            return List.of(
+                    Component.translatable(challenge.translationAt(0).key(), challenge.fallbackA()),
+                    Component.translatable(challenge.translationAt(1).key(), challenge.fallbackB()),
+                    Component.translatable(challenge.translationAt(2).key(), challenge.fallbackC()),
+                    Component.text(challenge.nonce()));
+        }
         return List.of(
                 wrap(
                         challenge,
@@ -14,9 +21,7 @@ final class ProbeText {
                 wrap(
                         challenge,
                         Component.translatable(profile.second().key(), challenge.fallbackB())),
-                profile.probeFormat() == SignatureCheck.ProbeFormat.THREE_TRANSLATIONS
-                        ? Component.translatable(profile.third().key(), challenge.fallbackC())
-                        : wrap(challenge, Component.keybind(profile.keybind())),
+                wrap(challenge, Component.keybind(profile.keybind())),
                 Component.text(challenge.nonce()));
     }
 

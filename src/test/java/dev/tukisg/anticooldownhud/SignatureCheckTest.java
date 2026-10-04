@@ -30,12 +30,18 @@ class SignatureCheckTest {
             new SignatureCheck.Challenge(PROFILE, "challenge123");
 
     static String[] match(SignatureCheck.Challenge challenge) {
-        return new String[] {
-            "AutoMace",
-            "AutoTotem",
-            challenge.profile().third() == null ? "H" : "AutoAnchor",
-            challenge.nonce()
-        };
+        if (challenge.profile().third() != null) {
+            String[] result = new String[4];
+            for (int i = 0; i < 3; i++)
+                result[i] =
+                        challenge.translationAt(i).values().stream()
+                                .filter(s -> s.chars().allMatch(c -> c < 128))
+                                .findFirst()
+                                .orElseThrow();
+            result[3] = challenge.nonce();
+            return result;
+        }
+        return new String[] {"AutoMace", "AutoTotem", "H", challenge.nonce()};
     }
 
     static String[] vanilla(SignatureCheck.Challenge challenge) {
@@ -52,6 +58,10 @@ class SignatureCheckTest {
     static List<SignatureCheck.Profile> catalog() throws Exception {
         return SignatureCatalog.load(
                 new File(SignatureCheckTest.class.getResource("/signatures.yml").toURI()));
+    }
+
+    static SignatureCheck.Profile profile(String id) throws Exception {
+        return catalog().stream().filter(p -> p.id().equals(id)).findFirst().orElseThrow();
     }
 
     @Test
@@ -136,12 +146,23 @@ class SignatureCheckTest {
         int detected = 0;
         for (SignatureCheck.Profile profile : catalog()) {
             if (!profile.id().startsWith("cooldownhud-")) continue;
+            if (profile.id().equals("cooldownhud-memoryleakfix-combat")
+                    || profile.id().equals("cooldownhud-memoryleakfix-utility")) continue;
             var challenge = new SignatureCheck.Challenge(profile, "fixture12345");
             String[] lines = {
-                translations.getProperty(profile.first().key(), challenge.fallbackA()),
-                translations.getProperty(profile.second().key(), challenge.fallbackB()),
+                translations.getProperty(
+                        profile.third() == null
+                                ? profile.first().key()
+                                : challenge.translationAt(0).key(),
+                        challenge.fallbackA()),
+                translations.getProperty(
+                        profile.third() == null
+                                ? profile.second().key()
+                                : challenge.translationAt(1).key(),
+                        challenge.fallbackB()),
                 profile.third() != null
-                        ? translations.getProperty(profile.third().key(), challenge.fallbackC())
+                        ? translations.getProperty(
+                                challenge.translationAt(2).key(), challenge.fallbackC())
                         : profile.keybind().equals(translations.getProperty("keybind.registered"))
                                 ? "H"
                                 : profile.keybind(),

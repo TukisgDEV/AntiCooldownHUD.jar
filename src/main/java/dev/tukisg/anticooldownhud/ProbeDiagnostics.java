@@ -3,9 +3,16 @@ package dev.tukisg.anticooldownhud;
 final class ProbeDiagnostics {
     static String detail(SignatureCheck.Challenge challenge, String[] lines) {
         var profile = challenge.profile();
+        boolean triple = profile.probeFormat() == SignatureCheck.ProbeFormat.THREE_TRANSLATIONS;
+        boolean first =
+                (triple ? challenge.translationAt(0) : profile.first()).values().contains(lines[0]);
+        boolean second =
+                (triple ? challenge.translationAt(1) : profile.second())
+                        .values()
+                        .contains(lines[1]);
         String thirdDetail;
-        if (profile.probeFormat() == SignatureCheck.ProbeFormat.THREE_TRANSLATIONS) {
-            thirdDetail = ", third=" + profile.third().values().contains(lines[2]);
+        if (triple) {
+            thirdDetail = ", third=" + challenge.translationAt(2).values().contains(lines[2]);
         } else {
             String key =
                     lines[2].isBlank()
@@ -13,14 +20,18 @@ final class ProbeDiagnostics {
                             : profile.keybind().equals(lines[2]) ? "missing" : "text";
             thirdDetail = ", key=" + key;
         }
-        String detail =
-                profile.id()
-                        + ", first="
-                        + profile.first().values().contains(lines[0])
-                        + ", second="
-                        + profile.second().values().contains(lines[1])
-                        + thirdDetail;
+        String detail = profile.id() + ", first=" + first + ", second=" + second + thirdDetail;
         if (challenge.evaluate(lines) == SignatureCheck.Result.PARTIAL) {
+            if (triple) {
+                detail +=
+                        ", keys=["
+                                + challenge.translationAt(0).key()
+                                + ", "
+                                + challenge.translationAt(1).key()
+                                + ", "
+                                + challenge.translationAt(2).key()
+                                + "]";
+            }
             if (challenge.profile().probeFormat()
                     == SignatureCheck.ProbeFormat.TRANSLATION_ARGUMENT) {
                 boolean wrapperFallback = false;

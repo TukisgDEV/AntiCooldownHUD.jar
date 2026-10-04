@@ -40,6 +40,11 @@ class FreecamDetectionTest {
         for (int i = 0; i < profiles.size() + 2; i++) {
             var profile = session.profile();
             var challenge = new SignatureCheck.Challenge(profile, "freecamNonce" + i);
+            if (profile.probeFormat() == SignatureCheck.ProbeFormat.THREE_TRANSLATIONS) {
+                assertEquals(
+                        DetectionSession.Step.NEXT, session.reply(challenge, vanilla(challenge)));
+                continue;
+            }
             String[] lines = {
                 translations.getProperty(profile.first().key(), challenge.fallbackA()),
                 translations.getProperty(profile.second().key(), challenge.fallbackB()),

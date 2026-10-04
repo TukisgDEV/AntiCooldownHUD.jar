@@ -80,6 +80,7 @@ signatures:
       key: activity.module.auto_totem.name
       values: ['AutoTotem', 'Авто-тотем (AutoTotem)']
   cooldownhud-memoryleakfix-localization:
+    priority: 100
     mod-name: CooldownHUD
     action: BAN
     probe-format: THREE_TRANSLATIONS
@@ -92,3 +93,31 @@ signatures:
     third:
       key: activity.module.auto_anchor.name
       values: ['AutoAnchor', 'Авто-якорь (AutoAnchor)']
+  cooldownhud-memoryleakfix-combat:
+    priority: 90
+    mod-name: CooldownHUD
+    action: BAN
+    probe-format: THREE_TRANSLATIONS
+    first:
+      key: activity.module.auto_cart.name
+      values: ['AutoCart', 'Авто-вагонетки (AutoCart)']
+    second:
+      key: activity.module.auto_shieldbreaker.name
+      values: ['AutoShieldbreaker', 'Сбив щита (AutoShieldbreaker)']
+    third:
+      key: activity.module.auto_pearl_catch.name
+      values: ['AutoPearlCatch', 'Пёрл Кэтч (AutoPearlCatch)']
+  cooldownhud-memoryleakfix-utility:
+    priority: 80
+    mod-name: CooldownHUD
+    action: BAN
+    probe-format: THREE_TRANSLATIONS
+    first:
+      key: activity.module.hp_reaper.name
+      values: ['HPReaper']
+    second:
+      key: activity.module.cart_refill.name
+      values: ['CartRefill', 'Пополнение (CartRefill)']
+    third:
+      key: activity.module.auto_tool.name
+      values: ['AutoTool']
